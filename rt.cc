@@ -7,7 +7,7 @@ typedef float MY_TYPE;
 double streamTimePrintIncrement = 1.0; // seconds
 double streamTimePrintTime = 1.0; // seconds
 
-int inout( void *outputBuffer, void *inputBuffer, unsigned int /*nBufferFrames*/,
+int inout( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
            double streamTime, RtAudioStreamStatus status, void *data )
 {
   // Since the number of input and output channels is equal, we can do
@@ -19,13 +19,31 @@ int inout( void *outputBuffer, void *inputBuffer, unsigned int /*nBufferFrames*/
     streamTimePrintTime += streamTimePrintIncrement;
   }
 
-  unsigned int *bytes = (unsigned int *) data;
-  memcpy( outputBuffer, inputBuffer, *bytes );
+  float *out = (float*)outputBuffer;
+  float *in = (float*)inputBuffer;
+
+  // unsigned int *bytes = (unsigned int *) data;
+  for(int i = 0; i < nBufferFrames; i++) {
+    *out = *in;
+    out++;
+    *out = *in;
+    in++;
+    out++;
+  }
+  // memcpy( outputBuffer, inputBuffer, *bytes );
   return 0;
 }
 
 int main() {
   RtAudio audio;
+
+  unsigned int deviceCount = audio.getDeviceCount();
+
+  RtAudio::DeviceInfo info;
+  for(unsigned int i = 0; i < deviceCount; i++) {
+    info = audio.getDeviceInfo(i);
+    std::cout << "Device " << i << ": " << info.name << std::endl;
+  }
 
   unsigned int bufferFrames = 256;
   unsigned int sampleRate = 44100;
@@ -36,7 +54,7 @@ int main() {
   iParams.deviceId = audio.getDefaultInputDevice();
   oParams.deviceId = audio.getDefaultOutputDevice();
   iParams.nChannels = 1;
-  oParams.nChannels = 1;
+  oParams.nChannels = 2;
   iParams.firstChannel = 0;
   oParams.firstChannel= 0;
   
