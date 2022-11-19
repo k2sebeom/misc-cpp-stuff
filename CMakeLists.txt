@@ -9,22 +9,35 @@ project(
   LANGUAGES C CXX)
 
 include(FetchContent)
-FetchContent_Declare(
-  Fmt
-  GIT_REPOSITORY "https://github.com/fmtlib/fmt.git"
-  GIT_TAG "9.1.0"
+
+set(FFMPEG_DIR "/opt/homebrew")
+
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -D__MACOSX_CORE__")
+
+# FetchContent_Declare(
+#   RtAudio
+#   GIT_REPOSITORY "https://github.com/thestk/rtaudio.git"
+#   GIT_TAG "5.2.0"
+# )
+
+# FetchContent_MakeAvailable(RtAudio)
+# add_executable (program main.cc)
+# target_compile_options(program PUBLIC -Wall -Werror)
+
+add_executable(wire rt.cc RtAudio.cpp)
+target_compile_options(wire PUBLIC -Wall -Werror)
+# target_include_directories(wire PRIVATE ${CMAKE_SOURCE_DIR}/dep/rtaudio-5.2.0)
+target_link_libraries(wire PRIVATE "-framework CoreAudio" "-framework CoreFoundation")
+# target_include_directories(wire PRIVATE ${CMAKE_SOURCE_DIR}/dep/rtaudio-5.2.0/include)
+target_include_directories(wire PRIVATE /opt/homebrew/include)
+target_link_directories(wire PRIVATE /opt/homebrew/lib)
+target_link_libraries(wire PRIVATE
+  avcodec
+  avformat
+  avfilter
+  avdevice
+  swresample
+  swscale
+  avutil
 )
-
-FetchContent_Declare(
-  PortAudio
-  GIT_REPOSITORY "https://github.com/PortAudio/portaudio.git"
-  GIT_TAG "v19.7.0"
-)
-
-FetchContent_MakeAvailable(Fmt PortAudio)
-
-add_subdirectory(lib)
-add_executable (program main.cc)
-target_link_libraries(program shape)
-target_link_libraries(program portaudio)
-target_compile_options(program PUBLIC -Wall -Werror)
