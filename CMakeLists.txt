@@ -33,12 +33,27 @@ FetchContent_MakeAvailable(SndFile)
 
 add_executable(wire rt.cc RtAudio.cpp)
 target_compile_options(wire PUBLIC -Wall -Werror)
-# target_include_directories(wire PRIVATE ${CMAKE_SOURCE_DIR}/dep/rtaudio-5.2.0)
-target_link_libraries(wire PRIVATE "-framework CoreAudio" "-framework CoreFoundation")
-# target_include_directories(wire PRIVATE ${CMAKE_SOURCE_DIR}/dep/rtaudio-5.2.0/include)
-target_include_directories(wire PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1/include)
-target_link_directories(wire PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1/lib)
-target_link_libraries(wire PRIVATE
+target_link_libraries(wire PRIVATE "-framework CoreAudio" "-framework CoreFoundation" sndfile)
+
+add_executable(decode decode.cc)
+target_compile_options(decode PUBLIC -Wall -Werror)
+target_include_directories(decode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1/include)
+target_link_directories(decode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1/lib)
+target_link_libraries(decode PRIVATE
+  avcodec
+  avformat
+  avfilter
+  avdevice
+  swresample
+  swscale
+  avutil
+)
+
+add_executable(encode encode.cc)
+target_compile_options(encode PUBLIC -Wall -Werror)
+target_include_directories(encode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1/include)
+target_link_directories(encode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1/lib)
+target_link_libraries(encode PRIVATE
   avcodec
   avformat
   avfilter
@@ -48,3 +63,4 @@ target_link_libraries(wire PRIVATE
   avutil
   sndfile
 )
+

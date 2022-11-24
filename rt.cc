@@ -1,11 +1,6 @@
 #include <iostream>
 #include "RtAudio.h"
 #include <sndfile.hh>
-extern "C" {
-  #include <libavformat/avformat.h>
-  #include <libavcodec/avcodec.h>
-}
-
 
 typedef float MY_TYPE;
 #define FORMAT RTAUDIO_FLOAT32
@@ -44,27 +39,8 @@ int inout( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 
 int main(int argc, const char *argv[]) {
   // static float buffer[1024];
-  AVFormatContext* format = avformat_alloc_context();
-
-  avformat_open_input(&format, argv[1], NULL, NULL);
-
-  std::cout << format->iformat->name << std::endl;
-
-  // AVCodec *pCodec = NULL;
-  // AVCodecParameters *pCodecParameters = NULL;
-
-  for (int i = 0; i < format->nb_streams; i++) {
-    AVCodecParameters *pCodecParameters = format->streams[i]->codecpar;
-    std::cout << "Stream " << i << ": " << pCodecParameters->ch_layout.nb_channels << std::endl;
-  }
-
-  avformat_close_input(&format);
-  avformat_free_context(format);
-
-
 
   SndfileHandle file;
-  avformat_free_context(format);
 
   file = SndfileHandle("DM.wav");
 
