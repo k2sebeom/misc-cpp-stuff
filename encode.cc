@@ -3,6 +3,7 @@ extern "C" {
   #include <libavcodec/avcodec.h>
   #include <libavutil/opt.h>
   #include <libavutil/imgutils.h>
+  #include <libavutil/time.h>
 }
 #include <iostream>
 
@@ -44,7 +45,7 @@ int main(int argc, char** argv) {
     std::cout << "Start" << std::endl;
     AVFormatContext *ctx = NULL;
 
-    avformat_alloc_output_context2(&ctx, NULL, "mp4", NULL);
+    avformat_alloc_output_context2(&ctx, NULL, "flv", NULL);
     
     const AVCodec *aCodec = avcodec_find_encoder(ctx->oformat->audio_codec);
     AVCodecContext *aCodecCtx = avcodec_alloc_context3(aCodec);
@@ -67,8 +68,8 @@ int main(int argc, char** argv) {
     vCodecCtx->time_base = (AVRational){1, 25};
     vCodecCtx->framerate = (AVRational){25, 1};
     vCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
-    vCodecCtx->gop_size = 10;
-    vCodecCtx->max_b_frames = 1;
+    vCodecCtx->gop_size = 0;
+    // vCodecCtx->max_b_frames = 1;
 
     avcodec_open2(vCodecCtx, vCodec, NULL);
 
@@ -80,9 +81,10 @@ int main(int argc, char** argv) {
     avcodec_parameters_from_context(vStream->codecpar, vCodecCtx);
     vStream->time_base = vCodecCtx->time_base;
 
-    av_dump_format(ctx, 0, "foo.mp4", 1);
+    av_dump_format(ctx, 0, "rtmp://global-live.mux.com:5222/app/f0b35c84-d450-578e-f4e8-904a991515e5", 1);
 
-    avio_open(&ctx->pb, "foo.mp4", AVIO_FLAG_WRITE);
+    avio_open(&ctx->pb, "rtmp://global-live.mux.com:5222/app/f0b35c84-d450-578e-f4e8-904a991515e5", AVIO_FLAG_WRITE);
+    std::cout << "Open? " << std::endl;
 
     AVPacket *pkt = av_packet_alloc();
     AVPacket *vPkt = av_packet_alloc();
@@ -112,7 +114,9 @@ int main(int argc, char** argv) {
       exit(1);
     }
     int64_t pts = 0;
-    for(int i=0; i < 200; i++) {
+    int64_t vpts = 0;
+    int64_t startTime = av_gettime();
+    for(int i=0; i < 5000; i++) {
       av_frame_make_writable(frame);
       samplesL = (float*)frame->data[0];
       samplesR = (float*)frame->data[1];
@@ -125,25 +129,31 @@ int main(int argc, char** argv) {
       frame->pts = pts;
       pts += frame->nb_samples;
       encode(aCodecCtx, frame, pkt, ctx);
+      int cmp = av_compare_ts(pts, aCodecCtx->time_base, vpts, vCodecCtx->time_base);
+      if(cmp >= 0) {
+        av_frame_make_writable(vFrame);
+        for(int y = 0; y < vCodecCtx->height; y++) {
+          for(int x = 0; x < vCodecCtx->width; x++) {
+            vFrame->data[0][y * vFrame->linesize[0] + x] = x + y + i * 3;
+          }
+        }
+        for(int y = 0; y < vCodecCtx->height/2; y++) {
+          for(int x = 0; x < vCodecCtx->width/2; x++) {
+            vFrame->data[1][y * vFrame->linesize[1] + x] = 128 + y + i * 2;
+            vFrame->data[2][y * vFrame->linesize[2] + x] = 64 + x + i * 5;
+          }
+        }
+        vFrame->pts = vpts;
+        encode_v(vCodecCtx, vFrame, vPkt, ctx);
+        vpts += 1;
+      }
+      int64_t now_time = av_gettime() - startTime;
+      int64_t pts_time = (int)(pts * 1000000 / aCodecCtx->sample_rate);
+      if(pts_time > now_time) {
+        av_usleep(pts_time - now_time);
+      }
     }
     encode(aCodecCtx, NULL, pkt, ctx);
-
-    for(int64_t i = 0; i < 250; i++) {
-      av_frame_make_writable(vFrame);
-      for(int y = 0; y < vCodecCtx->height; y++) {
-        for(int x = 0; x < vCodecCtx->width; x++) {
-          vFrame->data[0][y * vFrame->linesize[0] + x] = x + y + i * 3;
-        }
-      }
-      for(int y = 0; y < vCodecCtx->height/2; y++) {
-        for(int x = 0; x < vCodecCtx->width/2; x++) {
-          vFrame->data[1][y * vFrame->linesize[1] + x] = 128 + y + i * 2;
-          vFrame->data[2][y * vFrame->linesize[2] + x] = 64 + x + i * 5;
-        }
-      }
-      vFrame->pts = i;
-      encode_v(vCodecCtx, vFrame, vPkt, ctx);
-    }
     encode_v(vCodecCtx, NULL, vPkt, ctx);
 
     av_write_trailer(ctx);
