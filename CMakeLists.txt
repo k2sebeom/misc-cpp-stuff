@@ -37,8 +37,8 @@ target_link_libraries(wire PRIVATE "-framework CoreAudio" "-framework CoreFounda
 
 add_executable(decode decode.cc)
 target_compile_options(decode PUBLIC -Wall -Werror)
-target_include_directories(decode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1/include)
-target_link_directories(decode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1/lib)
+target_include_directories(decode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1.2/include)
+target_link_directories(decode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1.2/lib)
 target_link_libraries(decode PRIVATE
   avcodec
   avformat
@@ -49,10 +49,13 @@ target_link_libraries(decode PRIVATE
   avutil
 )
 
+add_executable(safety safety.cc)
+# target_link_libraries(safety PUBLIC pthread)
+
 add_executable(encode encode.cc)
 target_compile_options(encode PUBLIC -Wall -Werror)
-target_include_directories(encode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1/include)
-target_link_directories(encode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1/lib)
+target_include_directories(encode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1.2/include)
+target_link_directories(encode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1.2/lib)
 target_link_libraries(encode PRIVATE
   avcodec
   avformat
@@ -64,3 +67,18 @@ target_link_libraries(encode PRIVATE
   sndfile
 )
 
+
+add_executable(transcode transcode.cc)
+target_compile_options(transcode PUBLIC -Wall -Werror)
+target_include_directories(transcode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1.2/include)
+target_link_directories(transcode PRIVATE /opt/homebrew/Cellar/ffmpeg/5.1.2/lib)
+target_link_libraries(transcode PRIVATE
+  avcodec
+  avformat
+  avfilter
+  avdevice
+  swresample
+  swscale
+  avutil
+  sndfile
+)

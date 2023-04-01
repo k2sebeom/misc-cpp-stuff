@@ -22,15 +22,13 @@ int inout( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 
   float *out = (float*)outputBuffer;
   float *in = (float*)inputBuffer;
-  SndfileHandle *file = (SndfileHandle *) data;
-  file->readf(out, nBufferFrames);
+  // SndfileHandle *file = (SndfileHandle *) data;
+  // file->readf(out, nBufferFrames);
 
   for(int i = 0; i < nBufferFrames; i++) {
-    *out *= 0.5;
-    *out += *in * 0.5;
+    *out = *in;
     out++;
-    *out *= 0.5;
-    *out += *in * 0.5;
+    *out = *in;
     in++;
     out++;
   }
@@ -71,7 +69,7 @@ int main(int argc, const char *argv[]) {
   // options.flags = RTAUDIO_NONINTERLEAVED;
 
   audio.openStream(
-    &oParams, &iParams, FORMAT, sampleRate, &bufferFrames, &inout, (void *)&file, &options
+    &oParams, &iParams, FORMAT, sampleRate, &bufferFrames, &inout, NULL, &options
   );
 
   std::cout << audio.isStreamOpen() << std::endl;
